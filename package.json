@@ -1,0 +1,22 @@
+{
+  "name": "duo-check",
+  "version": "1.0.0",
+  "description": "Does your site survive the fold? Renders any URL at the iPhone Duo folded and unfolded sizes in headless Chromium on a free Cloudflare Worker.",
+  "main": "src/worker.js",
+  "scripts": {
+    "test": "node --test test/",
+    "deploy:dry": "wrangler deploy --dry-run --outdir dist"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@cloudflare/puppeteer": "^1.4.0"
+  },
+  "devDependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "wrangler": "^4.86.0"
+  }
+}

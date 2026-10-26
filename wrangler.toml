@@ -1,0 +1,31 @@
+name = "duo-check"
+main = "src/worker.js"
+compatibility_date = "2026-01-15"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[observability]
+enabled = true
+
+# The page ships inside the Worker as Text modules (see src/worker.js imports).
+[[rules]]
+type = "Text"
+globs = ["**/public/*.html", "**/public/*.css", "**/public/*.js"]
+fallthrough = false
+
+[[rules]]
+type = "Data"
+globs = ["**/*.woff2"]
+fallthrough = false
+
+[browser]
+binding = "BROWSER"
+
+[[kv_namespaces]]
+binding = "KV"
+# Paste the id printed by `npx wrangler kv namespace create duo-check`.
+id = "00000000000000000000000000000000"
+
+[vars]
+# Fresh (uncached) checks per UTC day. Free plan = 10 browser minutes/day. See README, "Daily cap".
+DAILY_CAP = "25"
