@@ -83,7 +83,7 @@
   function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2200); }
 
   async function refreshMeter() {
-    try { const s = await (await fetch('/api/status')).json(); $('meter').textContent = `${s.remaining} of ${s.cap} fresh checks left today · repeat checks are free for 1h`; }
+    try { const s = await (await fetch('/api/status')).json(); $('meter').textContent = `${s.remaining}/${s.cap} fresh checks left today · repeats free`; }
     catch { /* meter is cosmetic */ }
   }
 
@@ -92,7 +92,7 @@
     if (S.busy) return;
     showMsg('');
     if (window.DuoSound) DuoSound.unlock();
-    $('result').hidden = true; S.result = null;
+    $('result').hidden = true; S.result = null; $('samples').hidden = true;
     $('controls').classList.remove('ready'); $('fold-btn').classList.remove('nudge');
     loadImages(PH); setPose('folded', { sound: false });
     loading(true);
@@ -105,7 +105,7 @@
     if (!data || data.error) {
       if (window.DuoSound && data && data.error !== 'bad-url') DuoSound.play('sting', 0);
       showMsg((data && data.message) || 'Something broke. Try again.', data && data.retryAfter);
-      $('controls').classList.add('ready'); loadImages(PH); refreshMeter();
+      $('controls').classList.add('ready'); $('samples').hidden = false; loadImages(PH); refreshMeter();
       return;
     }
     S.result = data; show(data); refreshMeter();
@@ -171,8 +171,10 @@
     const fy = dy + dh + 72, fh = 340, fw = Math.round((fh - 2 * bz) * 382 / 580 + 2 * bz), fx = 64;
     c.save(); c.shadowColor = 'rgba(0,0,0,.7)'; c.shadowBlur = 40; c.shadowOffsetY = 22; c.fillStyle = '#0a0b0e'; rr(c, fx, fy, fw, fh, 40); c.fill(); c.restore();
     c.strokeStyle = 'rgba(255,255,255,.2)'; c.lineWidth = 2; rr(c, fx, fy, fw, fh, 40); c.stroke();
-    c.save(); rr(c, fx + bz, fy + bz, fw - 2 * bz, fh - 2 * bz, 28); c.clip(); c.fillStyle = '#000'; c.fillRect(fx, fy, fw, fh); if (fi) c.drawImage(fi, fx + bz, fy + bz, fw - 2 * bz, fh - 2 * bz); c.restore();
-    c.fillStyle = '#000'; rr(c, fx + fw / 2 - 40, fy + bz + 10, 80, 24, 12); c.fill();
+    // the island sits in a taller top bezel, so it never covers the page; the screenshot is top-anchored and loses a sliver at the bottom
+    const ex = 16, sw = fw - 2 * bz, sh = fh - 2 * bz - ex;
+    c.save(); rr(c, fx + bz, fy + bz + ex, sw, sh, 28); c.clip(); c.fillStyle = '#000'; c.fillRect(fx, fy, fw, fh); if (fi) c.drawImage(fi, 0, 0, fi.width, fi.height * sh / (fh - 2 * bz), fx + bz, fy + bz + ex, sw, sh); c.restore();
+    c.fillStyle = '#000'; rr(c, fx + fw / 2 - 36, fy + 9, 72, 18, 9); c.fill();
     c.fillStyle = '#565a65'; c.font = '500 22px JBMono, monospace'; c.fillText('FOLDED · 382 × 580', fx + 4, fy + fh + 40);
 
     // score
@@ -215,6 +217,7 @@
 
   /* ---------- wiring ---------- */
   form.addEventListener('submit', (e) => { e.preventDefault(); runCheck(urlIn.value); });
+  $('samples').addEventListener('click', (e) => { const b = e.target.closest('button[data-url]'); if (!b) return; urlIn.value = b.dataset.url; if (window.DuoSound) DuoSound.unlock(); runCheck(b.dataset.url); });
   $('chips').addEventListener('click', (e) => { const b = e.target.closest('button[data-url]'); if (!b) return; urlIn.value = b.dataset.url; if (window.DuoSound) DuoSound.unlock(); runCheck(b.dataset.url); });
   $('seg').addEventListener('click', (e) => { const b = e.target.closest('button[data-pose]'); if (!b || !$('controls').classList.contains('ready')) return; if (window.DuoSound) DuoSound.unlock(); $('fold-btn').classList.remove('nudge'); setPose(b.dataset.pose); });
   $('fold-btn').addEventListener('click', () => { if (window.DuoSound) DuoSound.unlock(); $('fold-btn').classList.remove('nudge'); setPose(S.pose === 'folded' ? 'landscape' : 'folded'); });
@@ -222,7 +225,7 @@
   $('msg-retry').addEventListener('click', () => runCheck(urlIn.value));
   $('save-btn').addEventListener('click', saveCard);
   $('share-btn').addEventListener('click', shareCard);
-  $('again-btn').addEventListener('click', () => { $('result').hidden = true; S.result = null; loadImages(PH); setPose('folded', { sound: false }); $('controls').classList.remove('ready'); window.scrollTo({ top: 0, behavior: 'smooth' }); urlIn.value = ''; urlIn.focus(); });
+  $('again-btn').addEventListener('click', () => { $('result').hidden = true; $('samples').hidden = false; S.result = null; loadImages(PH); setPose('folded', { sound: false }); $('controls').classList.remove('ready'); window.scrollTo({ top: 0, behavior: 'smooth' }); urlIn.value = ''; urlIn.focus(); });
 
   const mute = $('mute-btn'), music = $('music-btn');
   function syncAudioBtns() { mute.setAttribute('aria-pressed', String(DuoSound.muted)); mute.setAttribute('aria-label', DuoSound.muted ? 'Unmute sound' : 'Mute sound'); music.setAttribute('aria-pressed', String(DuoSound.musicOn)); }

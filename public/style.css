@@ -80,25 +80,35 @@ h1 em::after { content: ''; position: absolute; left: 0; right: 0; bottom: .02em
 .stage[data-pose="portrait"] .device { opacity: 0; pointer-events: none; transition: opacity .3s; }
 
 .leaf { position: relative; width: var(--w); height: 100%; transform-style: preserve-3d; }
-.leaf.a { opacity: 0; transition: opacity .01s calc(var(--dur) * .92); }
-.stage[data-pose="landscape"] .leaf.a { opacity: 1; transition-delay: 0s; }
-.stage[data-pose="portrait"] .leaf.a { opacity: 1; }
+/* Leaf A is the left half. While closed it sits under the folded phone, so its hinge-side corners
+   morph from the phone's 30px radius to the flat 4px edge, and it fades after leaf B has covered it
+   (no square corners poking out of the rounded frame, ever). */
+.leaf.a { opacity: 0; transition: opacity .2s calc(var(--dur) * .72); }
+.stage[data-pose="landscape"] .leaf.a { opacity: 1; transition: opacity .2s calc(var(--dur) * .1); }
+.stage[data-pose="portrait"] .leaf.a { opacity: 1; transition: opacity .2s 0s; }
 .leaf.b { transform-origin: 0 50%; transform: translateZ(1px) rotateY(-180deg); transition: transform var(--dur) var(--ease); }
 .stage[data-pose="landscape"] .leaf.b { transform: translateZ(1px) rotateY(0deg); }
-.face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; padding: var(--b); border-radius: 30px;
+.face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; padding: var(--b); border-radius: 30px; overflow: hidden; -webkit-transform: translateZ(0); clip-path: inset(0 round var(--fr, 30px));
   background: linear-gradient(135deg, #565a63 0%, #1d1f25 14%, #0a0b0e 45%, #0a0b0e 62%, #25282f 86%, #4d515a 100%);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), inset 0 0 0 3px #08090c, 0 30px 60px -24px rgba(0,0,0,.9); }
-.leaf.a .face { border-radius: 30px 4px 4px 30px; padding-right: 0; }
-.leaf.b .front { border-radius: 4px 30px 30px 4px; padding-left: 0; }
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), inset 0 0 0 3px #08090c; }
+.leaf.a .face { --fr: 30px; border-radius: 30px; padding-right: 0; transition: border-radius var(--dur) var(--ease), clip-path var(--dur) var(--ease); }
+.stage:not([data-pose="folded"]) .leaf.a .face { --fr: 30px 4px 4px 30px; border-radius: 30px 4px 4px 30px; }
+.leaf.b .front { --fr: 4px 30px 30px 4px; border-radius: 4px 30px 30px 4px; padding-left: 0; }
 .leaf.b .back { transform: rotateY(180deg); border-radius: 30px; }
-.screen { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 22px; background: #000; isolation: isolate; }
-.leaf.a .screen { border-radius: 22px 0 0 22px; } .leaf.b .front .screen { border-radius: 0 22px 22px 0; }
+.screen { --sr: 22px; position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: var(--sr); clip-path: inset(0 round var(--sr)); background: #000; isolation: isolate; -webkit-mask-image: -webkit-radial-gradient(white, black); }
+.leaf.a .screen { --sr: 22px; transition: border-radius var(--dur) var(--ease), clip-path var(--dur) var(--ease); }
+.stage:not([data-pose="folded"]) .leaf.a .screen { --sr: 22px 0 0 22px; }
+ .leaf.b .front .screen { --sr: 0 22px 22px 0; }
+.screen::after, .shade { border-radius: inherit; }
 .screen::after { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: linear-gradient(112deg, rgba(255,255,255,.1) 0%, rgba(255,255,255,0) 32%, rgba(255,255,255,0) 70%, rgba(255,255,255,.04) 100%); }
-.screen img { position: absolute; top: 0; height: 100%; display: block; user-select: none; -webkit-user-drag: none; object-fit: fill; }
+.screen img { position: absolute; top: 0; height: 100%; display: block; user-select: none; -webkit-user-drag: none; object-fit: fill; border-radius: inherit; }
 #img-a { left: 0; width: calc(var(--w) * 2 - var(--b) * 2); }
 #img-b { left: calc(-1 * (var(--w) - var(--b))); width: calc(var(--w) * 2 - var(--b) * 2); }
 #img-f, #img-p { left: 0; width: 100%; }
-.island { position: absolute; z-index: 4; left: 50%; top: calc(var(--b) + 7px); width: 27%; height: 11px; max-height: 3.2%; border-radius: 9px; transform: translateX(-50%); background: #000; box-shadow: 0 0 0 1px rgba(255,255,255,.04); }
+/* folded face: the island lives in a taller top bezel, so it never covers the page */
+.leaf.b .back { padding-top: calc(var(--b) + 17px); }
+#img-f { object-fit: cover; object-position: 50% 0; }
+.island { position: absolute; z-index: 4; left: 50%; top: calc(var(--b) + 4px); width: 24%; height: 10px; border-radius: 9px; transform: translateX(-50%); background: #000; box-shadow: 0 0 0 1px rgba(255,255,255,.04); }
 .shade { position: absolute; inset: 0; z-index: 5; pointer-events: none; background: #000; opacity: 0; }
 .leaf.b.moving .shade { animation: shade var(--dur) var(--ease); }
 .crease { position: absolute; z-index: 6; top: 0; bottom: 0; left: var(--w); width: 26px; margin-left: -13px; transform: translateZ(3px); pointer-events: none; opacity: 0; transition: opacity .4s;
@@ -109,7 +119,7 @@ h1 em::after { content: ''; position: absolute; left: 0; right: 0; bottom: .02em
 .pdev { position: absolute; width: var(--pw); height: var(--ph); opacity: 0; transform: scale(.88) rotateX(10deg); transition: transform .6s var(--ease), opacity .4s; pointer-events: none; }
 .pdev .face { backface-visibility: visible; }
 .stage[data-pose="portrait"] .pdev { opacity: 1; transform: none; transition-delay: .15s; }
-.pcrease { position: absolute; z-index: 6; left: var(--b); right: var(--b); top: 50%; height: 24px; margin-top: -12px; pointer-events: none; background: linear-gradient(180deg, transparent, rgba(0,0,0,.3) 36%, rgba(0,0,0,.5) 48%, rgba(255,255,255,.2) 50.5%, rgba(0,0,0,.2) 56%, transparent); mix-blend-mode: multiply; }
+.pcrease { position: absolute; z-index: 6; left: 0; right: 0; top: 50%; height: 14px; margin-top: -7px; pointer-events: none; opacity: .55; background: linear-gradient(180deg, transparent, rgba(0,0,0,.10) 40%, rgba(0,0,0,.16) 50%, rgba(255,255,255,.07) 53%, transparent); }
 
 /* loading shimmer on every screen */
 .stage[data-state="loading"] .screen::before { content: ''; position: absolute; left: 0; right: 0; height: 36%; z-index: 4; background: linear-gradient(180deg, transparent, rgba(200,255,46,.28) 70%, rgba(200,255,46,.9) 99%, transparent 100%); animation: scan 1.5s ease-in-out infinite; }
@@ -190,3 +200,22 @@ h1 em::after { content: ''; position: absolute; left: 0; right: 0; bottom: .02em
 
 @media (min-width: 560px) { .app { padding-left: 28px; padding-right: 28px; } .field input { font-size: 17px; } .card-actions { grid-template-columns: 1fr 1fr 1fr; } .btn.ghost { grid-column: auto; } .controls { grid-template-columns: 1.3fr 1fr; align-items: center; } }
 @media (prefers-reduced-motion: reduce) { :root { --dur: .01s; } *, *::before, *::after { animation-duration: .01s !important; animation-iteration-count: 1 !important; } }
+
+/* ---------- sample results (landing, above the fold) ---------- */
+.samples { margin-top: 16px; }
+.samples[hidden] { display: none; }
+.samples-h { display: flex; align-items: center; gap: 8px; margin: 0 2px 10px; font: 500 10.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.samples-h i { flex: 1; height: 1px; background: var(--line); }
+.samples-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sample { position: relative; display: grid; gap: 8px; padding: 8px 8px 11px; text-align: left; color: var(--ink); border-radius: 20px; border: 1px solid var(--line); background: rgba(255,255,255,.04); transition: transform .2s, border-color .2s; }
+.sample:hover { border-color: rgba(255,255,255,.28); transform: translateY(-2px); }
+.sample:active { transform: scale(.98); }
+.sample .thumb { display: block; border-radius: 13px; overflow: hidden; background: #000; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); aspect-ratio: 951 / 585; }
+.sample .thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.sample .s-score { position: absolute; top: 14px; right: 14px; padding: 4px 9px 4px 8px; border-radius: 99px; font: 600 11px var(--mono); background: rgba(7,8,11,.82); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.sample .s-score b { font-size: 15px; font-weight: 800; }
+.sample.bad .s-score { color: var(--bad); box-shadow: inset 0 0 0 1px rgba(255,90,90,.45); }
+.sample.good .s-score { color: var(--acc); box-shadow: inset 0 0 0 1px rgba(200,255,46,.45); }
+.sample .s-txt { display: grid; gap: 2px; padding: 0 4px; min-width: 0; }
+.sample .s-txt b { font: 700 12px var(--mono); letter-spacing: -.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sample .s-txt em { font-style: normal; font-size: 12.5px; color: var(--dim); line-height: 1.3; }
